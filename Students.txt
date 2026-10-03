@@ -5,15 +5,15 @@
 
 20192188H	Barrios Millones Charly Alberth
 
-20200490F	Bustos Ttito, José Fabricio
+"Bustos Ttito, José Fabricio" <jose.bustos.t@uni.pe>
 
-20230114B	Castillo Solorzano Piero David
+"Castillo Solorzano Piero David" <piero.castillo.s@uni.pe>
 
-20232209K	Diaz Pariacuri Cristian Brayan 
+"Diaz Pariacuri Cristian Brayan" <cristian.diaz.p@uni.pe>
 
 20221346A	Flores Alberca, Ángel Aarón
 
-20194028H	Gabriel Gerardo Yarlequé Ramos
+"Yarleque Ramos Gabriel Gerardo" <gabriel.yarleque.r@uni.pe>
 
 20170325B	Luna Bueno Aldo
 
@@ -25,8 +25,10 @@
 
 20220043E	Sanchez Vega Andre Alvaro
 
-20182177C	Unda Miguel Carlos Sinai
+"Unda Miguel Carlos Sinai" <cundam@uni.pe>
 
 20200570J	Vega Soldevilla Miguel Angel
 
-20184065H	Violeta Estrella Piero Alexis
+20194532H Hermoza Terreros Christian Omar <christian.hermoza.t@uni.pe>
+
+"Violeta Estrella Piero Alexis" <piero.violeta.e@uni.pe>
