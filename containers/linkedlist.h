@@ -47,6 +47,7 @@ public:
     using Node              = typename Traits::Node;
     using NodePtr           = Node *;
     using ForwardIterator   = typename Traits::ForwardIterator;
+    using Delim             = typename Node::Delim;
 private:
     NodePtr m_pRoot = nullptr; // puntero al primer nodo de la lista enlazada
     NodePtr m_pTail = nullptr; // puntero al último nodo de la lista enlazada
@@ -95,9 +96,26 @@ public:
 
     // TODO: implementar
     friend std::istream &operator >>(std::istream &is, const LinkedList<Traits> &list) {
+        Delim d;
+        Node node;
+        LinkedList temp;
+
+        is >> d;
+        if (is >> d && d != "]"){
+            is.unget();
+            while(is >> node >> d){
+                temp.push_back(node.getValue(), node.getRef());
+                if (d == ']'){
+                    break;
+                }
+            }    
+        }
+
+        std::lock_guard<std::mutex> lock(list.m_mutex);
+        list.swap(temp);
         return is; 
     }
-    
+
     // Iterators
     ForwardIterator begin() { return ForwardIterator(m_pRoot); }
     ForwardIterator end()   { return ForwardIterator(nullptr); }
