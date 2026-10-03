@@ -13,6 +13,7 @@ class LinkedListNode : public GeneralNode<T> {
     using NodePtr = Node *;
 public:
     NodePtr m_pNext = nullptr; // puntero al siguiente nodo
+    LinkedListNode() : GeneralNode<T>(T{}, Ref{}), m_pNext(nullptr) {}
     LinkedListNode(const T& value, Ref ref, NodePtr pNext) : GeneralNode<T>(value, ref), m_pNext(pNext){}
     // TODO: El operator<< deberia ir en GeneralNode, no en LinkedListNode, para que sea generico y reusable.
     /*
@@ -95,13 +96,13 @@ public:
     }
 
     // TODO: implementar
-    friend std::istream &operator >>(std::istream &is, const LinkedList<Traits> &list) {
+    friend std::istream &operator >>(std::istream &is, LinkedList<Traits> &list) {
         Delim d;
         Node node;
         LinkedList temp;
 
         is >> d;
-        if (is >> d && d != "]"){
+        if (is >> d && d != ']'){
             is.unget();
             while(is >> node >> d){
                 temp.push_back(node.getValue(), node.getRef());
