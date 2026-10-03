@@ -1,9 +1,11 @@
 #ifndef __LINKEDLIST_H__
 #define __LINKEDLIST_H__
 #include <mutex>
+#include <initializer_list>
 #include "GeneralNode.h"
 #include "GeneralIterator.h"
 #include "../foreach.h"
+#include "../types.h"
 
 template <typename T>
 class LinkedListNode : public GeneralNode<T> {
@@ -80,6 +82,7 @@ public:
     std::istream &read(std::istream &is)  { return is >> *this; }
 
     friend std::ostream &operator <<(std::ostream &os, const LinkedList<Traits> &list) {
+        std::lock_guard<std::mutex> lock(list.m_mutex);
         NodePtr current = list.m_pRoot;
         os << "[";
         while (current != nullptr) {
@@ -94,13 +97,30 @@ public:
     friend std::istream &operator >>(std::istream &is, const LinkedList<Traits> &list) {
         return is; 
     }
+    
     // Iterators
     ForwardIterator begin() { return ForwardIterator(m_pRoot); }
     ForwardIterator end()   { return ForwardIterator(nullptr); }
 
     // TODO: implementar ApplyFunction(), FirstThat(), call, rcall para LinkedList
     // Chequear que hago para evitar codigo repetido
+    template<typename Func, typename... Args>
+    decltype(auto) call(Func func, Args&&... args){
+        std::lock_guard<std::mutex> lock(this->m_mutex);
+        return ::call(begin(), end(), std::forward<Func>(func), std::forward<Args>(args)...);
+    }
+
+    template <typename Func, typename... Args>
+    void ApplyFunction(Func func, Args... args){
+        call(func, std::forward<Args>(args)...);
+    }
+
+    template <typename Func, typename... Args>
+    Node& FirstThat(Func func, Args... args){
+        return call(func, std::forward<Args>(args)...);
+    }
 };
+
 
 template <typename Traits>
 void LinkedList<Traits>::swap(LinkedList& otro) noexcept{
@@ -144,7 +164,7 @@ LinkedList<Traits>::LinkedList(const LinkedList& otro){
 }
 
 // TODO: explicar recursividad de cola de llamadas en insert() y internalInsert() [Hecho]
-template <typename Traits>
+template<typename Traits>
 void LinkedList<Traits>::internalInsert(const value_type& value, Ref ref, NodePtr &rParent){
     if (rParent == nullptr || value < rParent->getValue() ) {
         rParent = new Node(value, ref, rParent);
