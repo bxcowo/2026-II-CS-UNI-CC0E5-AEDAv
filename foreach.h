@@ -48,7 +48,7 @@ template <typename Iterator, typename Func, typename... Args>
 decltype(auto) FirstThat(Iterator begin, Iterator end, Func func, Args&&... args) {
     // for (auto iter = begin; iter != end; ++iter)
     //     func(*iter, std::forward<Args>(args)...);
-    ::call(begin, end, func, std::forward<Args>(args)...);
+    return ::call(begin, end, func, std::forward<Args>(args)...);
 }
 
 // // Iterator Level #3
