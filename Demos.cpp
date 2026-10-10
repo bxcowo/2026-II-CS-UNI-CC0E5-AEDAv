@@ -93,7 +93,7 @@ void TestTraversal(Container &container) {
     }
 }
 
-// Prueba los recorridos hacia únicamente hacia adelante, especialmente para una LinkedList
+// Prueba los recorridos únicamente hacia adelante
 template <typename Container>
 void TestForwardTraversal(Container &container){
     using Node = typename Container::Node;
@@ -112,6 +112,37 @@ void TestForwardTraversal(Container &container){
         auto threshold = (*container.begin()).getValue();
         Node &found = container.FirstThat(IsGreaterThan<Node, decltype(threshold)>, threshold);
         cout << "FirstThat (primer valor > " << threshold << "): " << found << endl;
+    }
+}
+
+// Prueba los recorridos únicamente hacia atrás
+template <typename Container>
+void TestBackwardTraversal(Container &container) {
+    using Node = typename Container::Node;
+
+    cout << "Prueba de uso de iteradores hacia atrás para impresión: [";
+    for (auto it = container.end(); it != container.begin(); ) {
+        --it;
+        PrintNode<Node>(*it, cout);
+    }
+    cout << "]" << endl;
+
+    // Análogo a FirstThat(), pero desde el final: primer nodo (contando desde
+    // atrás) cuyo valor sea mayor que el del primer elemento.
+    if (container.begin() != container.end()) {
+        auto threshold = (*container.begin()).getValue();
+        Node *found = nullptr;
+        for (auto it = container.end(); it != container.begin(); ) {
+            --it;
+            if (IsGreaterThan<Node, decltype(threshold)>(*it, threshold)) {
+                found = &(*it);
+                break;
+            }
+        }
+        if (found)
+            cout << "Backward FirstThat (primer valor > " << threshold << " desde atrás): " << *found << endl;
+        else
+            cout << "Backward FirstThat: ningún elemento mayor que " << threshold << endl;
     }
 }
 
@@ -177,45 +208,73 @@ void DemoRaceCondition() {
              << "sincroniza correctamente las inserciones concurrentes" << endl;
 }
 
-// TODO: Implementar DemoLinkedList() para probar la lista enlazada y sus iteradores.
-void DemoLinkedList()
-{
-    using IntLinkedList = LinkedList<LinkedListAscTraits<TX>>;
+template <typename List>
+void RunListDemo(const string &filename) {
+    ofstream(filename, ios::trunc).close();
 
-    ofstream("linkedlist.txt", ios::trunc).close();
-
-    // Pruebas de pushback
-    IntLinkedList list;
-    TestContainer(list, {{5, 15}, {1, 11}, {8, 18}, {3, 13}}, "linkedlist.txt");
+    // Pruebas de push_back
+    List list;
+    TestContainer(list, {{5, 15}, {1, 11}, {8, 18}, {3, 13}}, filename);
     TestForwardTraversal(list);
 
     auto elements = std::vector<pair<TX, Ref>>({{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}});
-    for(auto& e : elements)
+    for (auto &e : elements)
         list.push_back(e.first, e.second);
 
     // Pruebas de insert
     list.insert(4, 12);
     list.insert(11, 20);
     list.insert(7, 6);
-    cout << "LinkedList luego de hacer 3 inserts " << list << endl;
+    cout << "Lista luego de hacer 3 inserts " << list << endl;
 
-    // Prueba de apply function
+    // Prueba de ApplyFunction
     list.ApplyFunction(AddOne);
-    cout << "LinkedList tras usar Add One a sus elementos: " << list << endl;
+    cout << "Lista tras usar AddOne a sus elementos: " << list << endl;
     list.ApplyFunction(AddX<TX>, TX(10));
-    cout << "LinkedList tras usar AddX(10) a sus elementos: " << list << endl;
+    cout << "Lista tras usar AddX(10) a sus elementos: " << list << endl;
 
     // Prueba de clear
     list.clear();
-    cout << "LinkedList luego de usar clear" << list << endl;
+    cout << "Lista luego de usar clear " << list << endl;
     list.push_back(10, 2);
-    cout << "LinkedList luego de un nuevo push_back " << list << endl;
+    cout << "Lista luego de un nuevo push_back " << list << endl;
 
-    // Prueba de lectura
-    IntLinkedList new_list;
-    ifstream in("linkedlist.txt");
+    // Prueba de copia
+    List copia(list);
+    cout << "Copia de la lista: " << copia << endl;
+
+    // Prueba de lectura desde archivo
+    List new_list;
+    ifstream in(filename);
     in >> new_list;
     in.close();
-    cout << "LinkedList leida desde archivo: " << new_list << endl;
+    cout << "Lista leida desde archivo: " << new_list << endl;
     TestForwardTraversal(new_list);
+}
+
+void DemoLinkedList() {
+    cout << "=== LinkedList simple ===" << endl;
+    RunListDemo<LinkedList<LinkedListAscTraits<TX>>>("linkedlist.txt");
+}
+
+void DemoCircularLinkedList() {
+    cout << "=== LinkedList circular ===" << endl;
+    using IntCircularLinkedList = LinkedList<CircularLinkedListAscTraits<TX>>;
+    RunListDemo<IntCircularLinkedList>("circularlinkedlist.txt");
+}
+
+void DemoDoubleLinkedList() {
+    cout << "=== LinkedList doble ===" << endl;
+    using IntDoubleLinkedList = LinkedList<DoubleLinkedListAscTraits<TX>>;
+    RunListDemo<IntDoubleLinkedList>("doublelinkedlist.txt");
+}
+
+void DemoCircularDoubleLinkedList() {
+    cout << "=== LinkedList circular doble ===" << endl;
+    using IntCircularDoubleLinkedList = LinkedList<CircularDoubleLinkedListAscTraits<TX>>;
+    RunListDemo<IntCircularDoubleLinkedList>("circulardoublelinkedlist.txt");
+
+    // Prueba extra: recorrido hacia atrás
+    IntCircularDoubleLinkedList list({{1, 11}, {2, 12}, {3, 13}});
+    TestBackwardTraversal(list);
 }
