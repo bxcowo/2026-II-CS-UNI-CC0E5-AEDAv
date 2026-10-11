@@ -115,37 +115,6 @@ void TestForwardTraversal(Container &container){
     }
 }
 
-// Prueba los recorridos únicamente hacia atrás
-template <typename Container>
-void TestBackwardTraversal(Container &container) {
-    using Node = typename Container::Node;
-
-    cout << "Prueba de uso de iteradores hacia atrás para impresión: [";
-    for (auto it = container.end(); it != container.begin(); ) {
-        --it;
-        PrintNode<Node>(*it, cout);
-    }
-    cout << "]" << endl;
-
-    // Análogo a FirstThat(), pero desde el final: primer nodo (contando desde
-    // atrás) cuyo valor sea mayor que el del primer elemento.
-    if (container.begin() != container.end()) {
-        auto threshold = (*container.begin()).getValue();
-        Node *found = nullptr;
-        for (auto it = container.end(); it != container.begin(); ) {
-            --it;
-            if (IsGreaterThan<Node, decltype(threshold)>(*it, threshold)) {
-                found = &(*it);
-                break;
-            }
-        }
-        if (found)
-            cout << "Backward FirstThat (primer valor > " << threshold << " desde atrás): " << *found << endl;
-        else
-            cout << "Backward FirstThat: ningún elemento mayor que " << threshold << endl;
-    }
-}
-
 void DemoVector() {
     // Dejamos los archivos vacios para que TestContainer acumule (append)
     // el estado del container tras cada paso
@@ -254,27 +223,26 @@ void RunListDemo(const string &filename) {
 
 void DemoLinkedList() {
     cout << "=== LinkedList simple ===" << endl;
-    RunListDemo<LinkedList<LinkedListAscTraits<TX>>>("linkedlist.txt");
+    RunListDemo<LinkedAscList<TX>>("linkedlist.txt");
 }
 
 void DemoCircularLinkedList() {
     cout << "=== LinkedList circular ===" << endl;
-    using IntCircularLinkedList = LinkedList<CircularLinkedListAscTraits<TX>>;
+    using IntCircularLinkedList = CircularLinkedAscList<TX>;
     RunListDemo<IntCircularLinkedList>("circularlinkedlist.txt");
 }
 
 void DemoDoubleLinkedList() {
     cout << "=== LinkedList doble ===" << endl;
-    using IntDoubleLinkedList = LinkedList<DoubleLinkedListAscTraits<TX>>;
+    using IntDoubleLinkedList = DoubleLinkedAscList<TX>;
     RunListDemo<IntDoubleLinkedList>("doublelinkedlist.txt");
 }
 
 void DemoCircularDoubleLinkedList() {
     cout << "=== LinkedList circular doble ===" << endl;
-    using IntCircularDoubleLinkedList = LinkedList<CircularDoubleLinkedListAscTraits<TX>>;
+    using IntCircularDoubleLinkedList = CircularDoubleLinkedAscList<TX>;
     RunListDemo<IntCircularDoubleLinkedList>("circulardoublelinkedlist.txt");
 
     // Prueba extra: recorrido hacia atrás
     IntCircularDoubleLinkedList list({{1, 11}, {2, 12}, {3, 13}});
-    TestBackwardTraversal(list);
 }
