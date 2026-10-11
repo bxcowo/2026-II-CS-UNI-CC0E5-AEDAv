@@ -314,7 +314,7 @@ public:
 
     static void linkBefore(NodePtr next, NodePtr n){
         n->m_pNext = next;
-        n->m_pPrev = nullptr;
+        n->m_pPrev = next->m_pPrev;
         next->m_pPrev = n;
     }
 };
