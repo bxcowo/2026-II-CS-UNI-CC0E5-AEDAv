@@ -25,7 +25,7 @@ void Square(GeneralNode<TX> &node) {
 
 // Predicado generico para FirstThat/call: true si el valor del nodo es
 // mayor que 'threshold'. Generico en Node y T para servir tanto a
-// Vector<VectorAscTraits<TX>> (int) como a Vector<VectorAscTraits<string>>.
+// Vector<VectorTraits<TX>> (int) como a Vector<VectorTraits<string>>.
 template <typename Node, typename T>
 bool IsGreaterThan(Node &node, T threshold) {
     return node.getValue() > threshold;
@@ -122,12 +122,12 @@ void DemoVector() {
 
     // Cada elemento es una pareja (valor, ref) que se guarda en un Node;
     // el constructor initializer_list arma el Vector inicial de una vez
-    Vector<VectorAscTraits<TX>> vec({{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}});
+    Vector<VectorTraits<TX>> vec({{0, 10}, {1, 11}, {2, 12}, {3, 13}, {4, 14}});
     TestContainer(vec, {{5, 15}, {6, 16}, {7, 17}, {8, 18}, {9, 19}}, "vector.txt");
     TestTraversal(vec);
 
     ofstream("vector_str.txt", ios::trunc).close();
-    Vector<VectorAscTraits<string>> strVec;
+    Vector<VectorTraits<string>> strVec;
     TestContainer(strVec, {{"Hello", 1}, {"World", 2}}, "vector_str.txt");
     TestTraversal(strVec);
 }
@@ -144,7 +144,7 @@ void DemoRaceCondition() {
     for (size_t i = 0; i < N; ++i)
         values[i] = {static_cast<TX>(i), static_cast<Ref>(i)};
 
-    Vector<VectorAscTraits<TX>> vec;
+    Vector<VectorTraits<TX>> vec;
 
     // Insercion concurrente: NThreads workers insertando en paralelo sobre
     // el mismo Vector, cada uno con un subconjunto entrelazado (stride)

@@ -35,7 +35,7 @@ public:
 };
 
 template <typename T>
-struct VectorAscTraits {
+struct VectorTraits {
     using value_type        = T;
     using Node              = GeneralNode<T>;
     using ForwardIterator   = VectorForwardIterator<Node>;  // itera sobre Node, no sobre T
