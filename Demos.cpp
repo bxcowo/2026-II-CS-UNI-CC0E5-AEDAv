@@ -7,6 +7,7 @@
 #include "foreach.h"
 #include "containers/vector.h"
 #include "containers/linkedlist.h"
+#include "containers/heap.h"
 #include "Demos.h"
 using namespace std;
 
@@ -245,4 +246,127 @@ void DemoCircularDoubleLinkedList() {
 
     // Prueba extra: recorrido hacia atrás
     IntCircularDoubleLinkedList list({{1, 11}, {2, 12}, {3, 13}});
+}
+
+template <typename Heap>
+bool CheckPopOrder(const Heap &heap, ostream *os = nullptr) {
+    typename Heap::Compare comp;
+    Heap copia(heap);
+    bool ok = true, first = true;
+    typename Heap::value_type prev{};
+    while (!copia.empty()) {
+        auto node  = copia.pop();
+        auto value = node.getValue();
+        if (!first && comp(value, prev)) ok = false;
+        if (os) *os << node << " ";
+        prev  = value;
+        first = false;
+    }
+    return ok;
+}
+
+
+template <typename Heap>
+void TestHeapConcurrency() {
+    const size_t N = 20000;
+    Heap heap;
+    vector<thread> workers;
+    for (int t = 0; t < NThreads; ++t)
+        workers.emplace_back([&heap, t]() {
+            for (size_t i = t; i < N; i += NThreads)
+                heap.push(static_cast<TX>(i), static_cast<Ref>(i));
+        });
+    for (auto &w : workers) w.join();
+
+    bool ok = heap.size() == N && CheckPopOrder(heap);
+    cout << "Push concurrente: " << heap.size() << "/" << N << " elementos, "
+         << (ok ? "heap valido" : "*** heap corrupto ***") << endl;
+}
+
+template <typename Heap>
+void RunHeapDemo(const string &filename){
+    using Node = typename Heap::Node;
+    ofstream(filename, ios::trunc).close();
+
+    // Construcción con initializer_list
+    Heap heap({{5, 15}, {-3, 13}, {8, 18}, {-1, 11}, {2, 12}});
+    cout << "Heap inicial (orden interno por niveles): " << heap << endl;
+    cout << "top(): " << heap.top() << endl;
+
+    // push uno por uno (HeapifyUp)
+    for (auto &e : vector<pair<TX, Ref>>{{7, 17}, {-6, 16}, {0, 10}, {4, 14}})
+        heap.push(e.first, e.second);
+    cout << "Heap tras 4 push: " << heap << endl;
+    cout << "top(): " << heap.top() << endl;
+
+    // Recorrido: muestran el orden interno
+    cout << "Forward traversal:  [";
+    heap.call(PrintNode<Node>, cout);
+    cout << "]" << endl;
+    cout << "Backward traversal: [";
+    heap.rcall(PrintNode<Node>, cout);
+    cout << "]" << endl;
+
+    // FirstThat: primer nodo con valor > 0
+    try {
+        Node found = heap.FirstThat(IsGreaterThan<Node, TX>, TX(0));
+        cout << "FirstThat (primer valor > 0): " << found << endl;
+    } catch (const runtime_error &e) {
+        cout << "FirstThat: " << e.what() << endl;
+    }
+
+    // pop sobre el heap real
+    Node raiz = heap.pop();
+    cout << "pop(): " << raiz << " -> heap: " << heap << endl;
+
+    // Aplicación de ApplyFuncion sin una función que altera el orden
+    heap.ApplyFunction(AddOne);
+    cout << "Heap tras AddOne: " << heap << endl;
+    heap.ApplyFunction(AddX<TX>, TX(10));
+    cout << "Heap tras AddX(10): " << heap << " -> heap valido? " << (CheckPopOrder(heap) ? "si" : "no") << endl;
+
+    Heap cuadrados(heap);
+    cuadrados.ApplyFunction(Square);
+    cuadrados.build_heap();
+    cout << "Copia tras Square: " << cuadrados << " -> heap valido? "
+         << (CheckPopOrder(cuadrados) ? "si" : "no") << endl;
+
+    // Escritura a archivo
+    ofstream of(filename, ios::app);
+    of << heap << endl;
+    of.close();
+
+    // clear + manejo de heap vacío
+    heap.clear();
+    cout << "Heap tras clear: " << heap << " (empty: " << (heap.empty() ? "si" : "no") << ")" << endl;
+    try {
+        heap.top();
+    } catch (const out_of_range &e) {
+        cout << "top() en heap vacio: " << e.what() << endl;
+    }
+
+    // Copia
+    heap.push(10, 2);
+    Heap copia(heap);
+    cout << "Copia del heap: " << copia << endl;
+
+    // Lectura desde archivo
+    Heap leido;
+    ifstream in(filename);
+    in >> leido;
+    in.close();
+    cout << "Heap leido desde archivo: " << leido << " -> heap valido? " << (CheckPopOrder(leido) ? "si" : "no") << endl;
+
+    TestHeapConcurrency<Heap>();
+}
+
+void DemoMinHeap(){
+    cout << "=== Min Heap ===" << endl;
+    using IntMinHeap = MinHeap<TX>;
+    RunHeapDemo<IntMinHeap>("intminheap.txt");
+}
+void DemoMaxHeap(){
+    cout << "=== Max Heap ===" << endl;
+    using IntMaxHeap = MaxHeap<TX>;
+    RunHeapDemo<IntMaxHeap>("intmaxheap.txt");
 }

@@ -8,5 +8,7 @@ void DemoLinkedList();
 void DemoCircularLinkedList();
 void DemoDoubleLinkedList();
 void DemoCircularDoubleLinkedList();
+void DemoMinHeap();
+void DemoMaxHeap();
 
 #endif // __DEMOS_H__
