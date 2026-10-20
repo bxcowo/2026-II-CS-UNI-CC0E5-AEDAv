@@ -3,6 +3,7 @@
 #include <concepts>
 #include <utility>
 #include <fstream>
+#include <mutex>
 #include <type_traits>
 #include <stdexcept>
 
@@ -86,7 +87,7 @@ class FirstThatExt : private Call<Derived> {
     const Derived& self() const { return static_cast<const Derived&>(*this); }
 
 public:
-    using Parent    = Call<Derived>;
+    using Parent = Call<Derived>;
 
     template <typename Func, typename... Args> requires ForwardTraversable<Derived>
     decltype(auto) FirstThat(Func&& func, Args&&... args) const {
@@ -182,6 +183,19 @@ protected:
         static_cast<Derived&>(*this).push_back(value, ref);
     }
 };
+
+template <typename Derived, typename Traits>
+class PersistTreeExt : public PersistBase<Derived, Traits> {
+    using Base = PersistBase<Derived, Traits>;
+
+protected:
+    using typename Base::value_type;
+
+    void persistAppend(const value_type& value, Ref ref) override {
+        static_cast<Derived&>(*this).push(value, ref);
+    }
+};
+
 
 
 
