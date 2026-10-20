@@ -1,9 +1,12 @@
 #ifndef __LINKEDLIST_H__
 #define __LINKEDLIST_H__
 #include <mutex>
+#include <functional>
+#include <initializer_list>
+
+#include "call.h"
 #include "GeneralNode.h"
 #include "GeneralIterator.h"
-#include "../foreach.h"
 
 // Nodos
 template <typename T>
@@ -80,7 +83,7 @@ template <typename Traits>
 concept HasBackwardIterator = requires { typename Traits::BackwardIterator; };
 
 template <typename Derived, typename Traits>
-class ListBase {
+class ListBase : public ForEachExt<Derived>, public FirstThatExt<Derived>, public PersistExt<Derived, Traits> {
 public:
     using value_type      = typename Traits::value_type;
     using Node            = typename Traits::Node;
@@ -116,9 +119,6 @@ private:
     Compare m_comp; // comparador para ordenar los nodos de la lista
     mutable std::mutex m_mutex; // mutex para sincronización
 
-    NodePtr GetRoot() const { return m_pRoot; }
-    NodePtr GetTail() const { return m_pTail; }
-
     NodePtr findInsertPos(const value_type& value) const {
         NodePtr prev = nullptr;
         NodePtr cur  = Derived::firstNode(m_pRoot);
@@ -131,6 +131,13 @@ private:
         return prev;
     }
 public:
+    NodePtr GetRoot() const { return m_pRoot; }
+    NodePtr GetTail() const { return m_pTail; }
+
+    std::unique_lock<std::mutex> acquireLock() const {
+        return std::unique_lock<std::mutex>(m_mutex);
+    }
+
     ListBase() { Derived::init(m_pRoot, m_pTail); }
     ListBase(const ListBase& another) { Derived::init(m_pRoot, m_pTail); *this = another; } // copia profunda de la lista enlazada
     ListBase& operator=(const ListBase& other) {
@@ -183,58 +190,10 @@ public:
             Derived::prepend(m_pRoot, m_pTail, n);
         }
     }
-
-    std::ostream& write(std::ostream& os) { return os << *this; }
-    std::istream& read(std::istream& is) { return is >> *this; }
-
-    friend std::ostream& operator <<(std::ostream& os, const ListBase& list) {
-        bool first = true;
-        os << "[";
-        list.ApplyFunction([&](Node& n){
-            if (!first)
-                os << ",";
-            os << n;
-            first = false;
-        });
-        return os << "]";
-    }
-    
-    friend std::istream &operator >>(std::istream &is, ListBase& list) {
-        Delim d;
-        Node node;
-        list.clear();
-
-        is >> d;
-        if (is >> d && d != ']'){
-            is.unget();
-            while(is >> node >> d){
-                list.push_back(node.getValue(), node.getRef());
-                if (d == ']') break;
-            }    
-        }
-
-        return is; 
-    }
     
     // Iterators
     ForwardIterator begin() const { return ForwardIterator(Derived::firstNode(m_pRoot)); }
     ForwardIterator end() const { return ForwardIterator(Derived::endNode(m_pRoot)); }
-
-    template <typename Func, typename... Args>
-    void ApplyFunction(Func func, Args&&... args) const {
-        call(func, std::forward<Args>(args)...);
-    }
-
-    template <typename Func, typename... Args>
-    Node& FirstThat(Func func, Args&&... args) const {
-        return call(func, std::forward<Args>(args)...);
-    }
-
-    template<typename Func, typename... Args>
-    decltype(auto) call(Func func, Args&&... args) const {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        return ::call(begin(), end(), func, std::forward<Args>(args)...);
-    }
 };
 
 template <typename Derived, typename Traits>
