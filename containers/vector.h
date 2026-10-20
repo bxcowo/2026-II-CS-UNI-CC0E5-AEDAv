@@ -32,6 +32,7 @@ public:
 
     // Prefix increment
     VectorBackwardIterator& operator++() { --Parent::m_ptr; return *this; }
+    T& operator*() const { return *(Parent::m_ptr - 1); }
 };
 
 template <typename T>
@@ -120,7 +121,7 @@ public:
     void pop_back() {
         lock_guard<mutex> lock(m_mutex);
         if (m_size > 0)
-            --m_size;
+            m_data[--m_size] = Node();
     }
 
     Node& operator[](size_t index) {
@@ -147,8 +148,8 @@ public:
 
     ForwardIterator   begin() const { return ForwardIterator(m_data); }
     ForwardIterator   end()   const { return ForwardIterator(m_data + m_size); }
-    BackwardIterator rbegin() const { return BackwardIterator(m_size ? m_data + m_size - 1 : nullptr); }
-    BackwardIterator rend()   const { return BackwardIterator(m_size ? m_data - 1 : nullptr); }
+    BackwardIterator rbegin() const { return BackwardIterator(m_data + m_size); }
+    BackwardIterator rend()   const { return BackwardIterator(m_data); }
 };
 
 #endif // __VECTOR_H__
