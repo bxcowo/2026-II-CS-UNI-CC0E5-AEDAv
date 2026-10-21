@@ -10,5 +10,7 @@ void DemoDoubleLinkedList();
 void DemoCircularDoubleLinkedList();
 void DemoMinHeap();
 void DemoMaxHeap();
+void DemoBST();
+void DemoDescBST();
 
 #endif // __DEMOS_H__
