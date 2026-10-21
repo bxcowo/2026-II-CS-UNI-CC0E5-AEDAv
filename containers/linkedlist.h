@@ -297,13 +297,13 @@ public:
     }
 };
 
-template<typename T> using LinkedAscList = LinkedListBase<LinkedListAscTraits<T>>;
-template<typename T> using LinkedDescList = LinkedListBase<LinkedListDescTraits<T>>;
-template<typename T> using CircularLinkedAscList = CircularLinkedListBase<LinkedListAscTraits<T>>;
-template<typename T> using CircularLinkedDescList = CircularLinkedListBase<LinkedListDescTraits<T>>;
-template<typename T> using DoubleLinkedAscList = DoubleLinkedListBase<DoubleLinkedListAscTraits<T>>;
-template<typename T> using DoubleLinkedDescList = DoubleLinkedListBase<DoubleLinkedListDescTraits<T>>;
-template<typename T> using CircularDoubleLinkedAscList = CircularDoubleLinkedListBase<DoubleLinkedListAscTraits<T>>;
-template<typename T> using CircularDoubleLinkedDescList = CircularDoubleLinkedListBase<DoubleLinkedListDescTraits<T>>;
+template<typename T> using AscLinkedList = LinkedListBase<LinkedListAscTraits<T>>;
+template<typename T> using DescLinkedList = LinkedListBase<LinkedListDescTraits<T>>;
+template<typename T> using AscCircularLinkedList = CircularLinkedListBase<LinkedListAscTraits<T>>;
+template<typename T> using DescCircularLinkedList = CircularLinkedListBase<LinkedListDescTraits<T>>;
+template<typename T> using AscDoubleLinkedList = DoubleLinkedListBase<DoubleLinkedListAscTraits<T>>;
+template<typename T> using DescDoubleLinkedList = DoubleLinkedListBase<DoubleLinkedListDescTraits<T>>;
+template<typename T> using AscCircularDoubleLinkedList = CircularDoubleLinkedListBase<DoubleLinkedListAscTraits<T>>;
+template<typename T> using DescCircularDoubleLinkedList = CircularDoubleLinkedListBase<DoubleLinkedListDescTraits<T>>;
 
 #endif // __LINKEDLIST_H__
