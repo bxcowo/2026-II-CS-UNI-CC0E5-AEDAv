@@ -8,6 +8,7 @@
 #include "containers/vector.h"
 #include "containers/linkedlist.h"
 #include "containers/heap.h"
+#include "containers/binarytree.h"
 #include "Demos.h"
 using namespace std;
 
@@ -224,24 +225,24 @@ void RunListDemo(const string &filename) {
 
 void DemoLinkedList() {
     cout << "=== LinkedList simple ===" << endl;
-    RunListDemo<LinkedAscList<TX>>("linkedlist.txt");
+    RunListDemo<AscLinkedList<TX>>("linkedlist.txt");
 }
 
 void DemoCircularLinkedList() {
     cout << "=== LinkedList circular ===" << endl;
-    using IntCircularLinkedList = CircularLinkedAscList<TX>;
+    using IntCircularLinkedList = AscCircularLinkedList<TX>;
     RunListDemo<IntCircularLinkedList>("circularlinkedlist.txt");
 }
 
 void DemoDoubleLinkedList() {
     cout << "=== LinkedList doble ===" << endl;
-    using IntDoubleLinkedList = DoubleLinkedAscList<TX>;
+    using IntDoubleLinkedList = AscDoubleLinkedList<TX>;
     RunListDemo<IntDoubleLinkedList>("doublelinkedlist.txt");
 }
 
 void DemoCircularDoubleLinkedList() {
     cout << "=== LinkedList circular doble ===" << endl;
-    using IntCircularDoubleLinkedList = CircularDoubleLinkedAscList<TX>;
+    using IntCircularDoubleLinkedList = AscCircularDoubleLinkedList<TX>;
     RunListDemo<IntCircularDoubleLinkedList>("circulardoublelinkedlist.txt");
 
     // Prueba extra: recorrido hacia atrás
@@ -365,8 +366,72 @@ void DemoMinHeap(){
     using IntMinHeap = MinHeap<TX>;
     RunHeapDemo<IntMinHeap>("intminheap.txt");
 }
+
 void DemoMaxHeap(){
     cout << "=== Max Heap ===" << endl;
     using IntMaxHeap = MaxHeap<TX>;
     RunHeapDemo<IntMaxHeap>("intmaxheap.txt");
+}
+
+template <typename View>
+void PrintTraversal(const string &name, const View &view) {
+    using Node = typename View::Node;
+    cout << name << ": [";
+    view.call(PrintNode<Node>, cout);
+    cout << "]  inverso: [";
+    view.rcall(PrintNode<Node>, cout);
+    cout << "]" << endl;
+}
+
+template <typename Tree>
+void RunBSTDemo(const string &filename){
+    using Node = typename Tree::Node;
+    ofstream(filename, ios::trunc).close();
+
+    // Construccion con initializer list
+    Tree tree({{5, 15}, {-3, 13}, {8, 18}, {-1, 11}, {2, 12}});
+    cout << "BST inicial (persistido en pre-order): " << tree << endl;
+
+    // push uno por uno
+    for (auto &e : vector<pair<TX, Ref>>{{7, 17}, {-6, 16}, {0, 10}, {4, 14}})
+        tree.push(e.first, e.second);
+    cout << "BST tras 4 push: " << tree << " (size: " << tree.size() << ")" << endl;
+
+    // Recorridos: in-order por defecto y las vistas pre/post-order
+    PrintTraversal("In-order  ", tree);
+    PrintTraversal("Pre-order ", tree.preorder());
+    PrintTraversal("Post-order", tree.postorder());
+
+    // FirstThat: depende del recorrido usado
+    try {
+        Node &found = tree.FirstThat(IsGreaterThan<Node, TX>, TX(0));
+        cout << "FirstThat in-order  (primer valor > 0): " << found << endl;
+        Node &foundPre = tree.preorder().FirstThat(IsGreaterThan<Node, TX>, TX(0));
+        cout << "FirstThat pre-order (primer valor > 0): " << foundPre << endl;
+    } catch (const runtime_error &e) {
+        cout << "FirstThat: " << e.what() << endl;
+    }
+
+    // clear + arbol vacio
+    tree.clear();
+    cout << "BST tras clear: " << tree << " (empty: " << (tree.empty() ? "si" : "no") << ")" << endl;
+
+    // Copia y movimiento
+    tree.push(10, 2);
+    Tree copia(tree);
+    cout << "Copia del BST: " << copia << endl;
+    Tree movido(std::move(copia));
+    cout << "Tras mover: movido = " << movido << ", copia = " << copia << " (empty: " << (copia.empty() ? "si" : "no") << ")" << endl;
+}
+
+void DemoBST(){
+    cout << "=== Binary Search Tree (BST) ===" << endl;
+    using IntBST = BST<TX>;
+    RunBSTDemo<IntBST>("intbst.txt");
+}
+
+void DemoDescBST(){
+    cout << "=== Descending Binary Search Tree (DescBST) ===" << endl;
+    using IntDescBST = DescBST<TX>;
+    RunBSTDemo<IntDescBST>("intdescbst.txt");
 }
