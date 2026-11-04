@@ -313,6 +313,21 @@ public:
         }
     }
 
+    void save(std::ostream& os) const {
+        auto lock = acquireLock();
+        std::string sep;
+        os << "[";
+        for (auto it = begin(TreeOrder::Pre); it != end(); ++it) {
+            os << sep << *it;
+            sep = ",";
+        }
+        os << "]";
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const BaseBinaryTree& tree) {
+        tree.save(os);
+        return os;
+    }
 };
 
 template <typename Traits, template <typename> typename... Mixins>
