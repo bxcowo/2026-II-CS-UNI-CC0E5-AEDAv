@@ -4,6 +4,7 @@
 #include "GeneralIterator.h"
 #include "GeneralContainer.h"
 #include "mixins.h"
+#include "../utilities/printcolored.h"
 
 enum class TreeOrder : size_t { Pre = 0, In = 1, Post = 2 };
 
@@ -178,6 +179,14 @@ protected:
     virtual void removeNodeImpl(NodePtr node);
     NodePtr eraseNode(NodePtr node);
 
+    static constexpr const char* kEmptyCell       = " ";
+    static constexpr const char* kHorizontal      = "─";
+    static constexpr const char* kLeftChildCorner  = "┌";
+    static constexpr const char* kRightChildCorner = "┐";
+    static constexpr const char* kBothChildren    = "┴";
+    static constexpr const char* kOnlyLeftChild   = "┘";
+    static constexpr const char* kOnlyRightChild  = "└";
+
 public:
     BaseBinaryTree() = default;
     BaseBinaryTree(const BaseBinaryTree& another);
@@ -235,6 +244,75 @@ public:
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         return BackwardIterator::make(m_root, order);
     }
+
+    void PrintVertical(std::ostream& os = std::cout) const {
+        static const Color kLevelColors[] = {
+            Color::Red, Color::Green, Color::Yellow,
+            Color::Blue, Color::Magenta, Color::Cyan
+        };
+
+        auto lock = acquireLock();
+        if (!m_root) return;
+
+        struct Item {
+            size_t col, center, depth;
+            std::string label;
+        };
+
+        std::unordered_map<NodePtr, Item> items;
+        size_t width = 0, height = 0;
+
+        // Inorden: la columna crece de izquierda a derecha
+        for (auto it = begin(TreeOrder::In); it != end(); ++it) {
+            NodePtr node = &*it;
+
+            std::ostringstream text;
+            text << node->getValue();
+            std::string label = text.str();
+
+            size_t depth = 0;
+            for (NodePtr p = node->m_parent; p; p = p->m_parent) ++depth;
+
+            items[node] = {width, width + label.size() / 2, depth, label};
+            width += label.size() + 1;
+            height = std::max(height, depth + 1);
+        }
+
+        // Filas pares: nodos. Filas impares: conectores
+        std::vector<std::vector<std::string>> canvas(2 * height - 1, std::vector<std::string>(width, kEmptyCell));
+
+        for (const auto& [node, item] : items) {
+            const size_t row = item.depth * 2;
+
+            for (size_t i = 0; i < item.label.size(); ++i)
+                canvas[row][item.col + i] = std::string(1, item.label[i]);
+
+            NodePtr left = node->m_pChild[0], right = node->m_pChild[1];
+            if (!left && !right) continue;
+
+            const size_t from = left  ? items.at(left).center  : item.center;
+            const size_t to   = right ? items.at(right).center : item.center;
+            auto& connectors = canvas[row + 1];
+
+            for (size_t col = from; col <= to; ++col) connectors[col] = kHorizontal;
+            if (left)  connectors[from] = kLeftChildCorner;
+            if (right) connectors[to]   = kRightChildCorner;
+            connectors[item.center] = (left && right) ? kBothChildren : (left ? kOnlyLeftChild : kOnlyRightChild);
+        }
+
+        for (size_t row = 0; row < canvas.size(); ++row) {
+            const auto& cells = canvas[row];
+
+            size_t last = cells.size();
+            while (last > 0 && cells[last - 1] == kEmptyCell) --last;
+
+            std::string line;
+            for (size_t col = 0; col < last; ++col) line += cells[col];
+
+            PrintColored(os, line, kLevelColors[(row / 2) % 6]);
+        }
+    }
+
 };
 
 template <typename Traits, template <typename> typename... Mixins>
@@ -370,8 +448,7 @@ void BaseBinaryTree<Traits, Mixins...>::clear() {
 }
 
 template <typename Traits, template <typename> typename... Mixins>
-auto BaseBinaryTree<Traits, Mixins...>::operator=(
-    const BaseBinaryTree& another) -> BaseBinaryTree& {
+auto BaseBinaryTree<Traits, Mixins...>::operator=(const BaseBinaryTree& another) -> BaseBinaryTree& {
     if (this == &another) return *this;
 
     std::scoped_lock lock(m_mutex, another.m_mutex);
@@ -386,13 +463,10 @@ auto BaseBinaryTree<Traits, Mixins...>::operator=(
 
 template <typename Traits, template <typename> typename... Mixins>
 auto BaseBinaryTree<Traits, Mixins...>::operator=(BaseBinaryTree&& another) noexcept -> BaseBinaryTree& {
-    if (this == &another) return *this;
-
-    std::scoped_lock lock(m_mutex, another.m_mutex);
-    clear();
-
-    m_root = std::exchange(another.m_root, nullptr);
-    m_size = std::exchange(another.m_size, 0);
+    this->move_from(another, [&] {
+        m_root = std::exchange(another.m_root, nullptr);
+        m_size = std::exchange(another.m_size, 0);
+    });
     return *this;
 }
 
