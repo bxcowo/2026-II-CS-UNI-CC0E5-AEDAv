@@ -3,6 +3,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <sstream>
+#include <unordered_map>
 #include "foreach.h"
 #include "containers/vector.h"
 #include "containers/linkedlist.h"
@@ -327,13 +329,25 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
 
     // Pruebas de insercion y persistencia
     TestContainer(tree, {{50, 5}, {20, 2}, {80, 8}, {10, 1}, {30, 3}, {70, 7}, {90, 9}}, filename);
+
+    {
+        ofstream out(filename, ios::trunc);
+        tree.save(out);
+    }
+
+    cout << "Arbol tras insertar:" << endl;
+    tree.PrintVertical();
+
     // Recorrido in-order
     TestTraversal(tree);
 
     tree.ApplyFunction(AddOne);
     cout << "Arbol tras usar AddOne: " << tree << endl;
+    tree.PrintVertical();
+
     tree.ApplyFunction(AddX<TX>, TX(10));
     cout << "Arbol tras usar AddX(10): " << tree << endl;
+    tree.PrintVertical();
 
     tree.clear();
     cout << "Arbol luego de usar clear: " << tree << endl;
@@ -344,9 +358,33 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
     in >> new_tree;
     in.close();
     cout << "Arbol leido desde archivo: " << new_tree << endl;
+    new_tree.PrintVertical();
 
     tree = new_tree;
     cout << "Arbol tras operator=: " << tree << endl;
+    tree.PrintVertical();
+
+    // Eliminacion: nodo sin hijos
+    tree.remove(10);
+    cout << "Arbol tras eliminar 10 (sin hijos): " << tree << endl;
+    tree.PrintVertical();
+
+    // Eliminacion: nodo con un hijo
+    tree.remove(20);
+    cout << "Arbol tras eliminar 20 (un hijo): " << tree << endl;
+    tree.PrintVertical();
+
+    // Eliminacion: raiz con dos hijos
+    tree.remove(50);
+    cout << "Arbol tras eliminar 50 (dos hijos): " << tree << endl;
+    tree.PrintVertical();
+
+    // Eliminacion: valor inexistente
+    try {
+        tree.remove(999);
+    } catch (const out_of_range &e) {
+        cout << "Error esperado: " << e.what() << endl;
+    }
 }
 
 void DemoBinaryTree() {
