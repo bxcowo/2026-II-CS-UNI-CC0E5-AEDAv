@@ -3,6 +3,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <initializer_list>
+#include <stdexcept>
+#include <utility>
 #include <sstream>
 #include <unordered_map>
 #include "foreach.h"
@@ -13,6 +16,7 @@
 #include "containers/circulardoublelinkedlist.h"
 #include "containers/Heap.h"
 #include "containers/binarytree.h"
+#include "containers/avltree.h"
 #include "utilities/printcolored.h"
 #include "Demos.h"
 using namespace std;
@@ -100,8 +104,12 @@ void TestTraversal(Container &container) {
     // nodo cuyo valor sea mayor que el del primer elemento del container.
     if (!container.empty()) {
         auto threshold = (*container.begin()).getValue();
-        Node &found = container.FirstThat(IsGreaterThan<Node, decltype(threshold)>, threshold);
-        cout << "FirstThat (primer valor > " << threshold << "): " << found << endl;
+        try {
+            Node &found = container.FirstThat(IsGreaterThan<Node, decltype(threshold)>, threshold);
+            cout << "FirstThat (primer valor > " << threshold << "): " << found << endl;
+        } catch (const runtime_error &e) {
+            cout << "FirstThat: ningun valor es mayor que " << threshold << endl;
+        }
     }
 }
 
@@ -352,7 +360,7 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
     tree.clear();
     cout << "Arbol luego de usar clear: " << tree << endl;
 
-    // lectura
+    // Lectura
     TreeContainer new_tree;
     ifstream in(filename);
     in >> new_tree;
@@ -389,7 +397,106 @@ void TestBinaryTree(TreeContainer &tree, const string &filename) {
 
 void DemoBinaryTree() {
     cout << "\n";
-    PrintColored(cout, "Pruebas para BinaryTree", Color::Yellow);
-    BinaryTree<BinaryTreeAscTraits<TX>> tree;
-    TestBinaryTree(tree, "binarytree.txt");
+    PrintColored(cout, "Pruebas para BinaryTree ascendente", Color::Yellow);
+    BinaryTree<BinaryTreeAscTraits<TX>> asc_tree;
+    TestBinaryTree(asc_tree, "binarytree_asc.txt");
+
+    cout << "\n";
+    PrintColored(cout, "Pruebas para BinaryTree descendente", Color::Yellow);
+    BinaryTree<BinaryTreeDescTraits<TX>> desc_tree;
+    TestBinaryTree(desc_tree, "binarytree_desc.txt");
+}
+
+template <typename TreeContainer>
+void PrintAVLStatus(const TreeContainer &tree) {
+    cout << "Altura: " << tree.height()
+         << ", balanceado: " << boolalpha << tree.isBalanced() << endl;
+}
+
+template <typename TreeContainer>
+void TestAVLInsertion(initializer_list<TX> values) {
+    TreeContainer tree;
+    cout << "Insertando:";
+    for (TX value : values) {
+        cout << " " << value;
+        tree.insert(value, Ref(value));
+    }
+    cout << endl;
+
+    tree.PrintVertical();
+    PrintAVLStatus(tree);
+}
+
+template <typename TreeContainer>
+void TestAVLTree(TreeContainer &tree, const string &filename) {
+    // Pruebas generales: persistencia, recorridos, copia y eliminacion
+    TestBinaryTree(tree, filename);
+
+    // Los cuatro casos de rotacion
+    cout << "\nCasos de rotacion:" << endl;
+    TestAVLInsertion<TreeContainer>({10, 20, 30});
+    TestAVLInsertion<TreeContainer>({30, 20, 10});
+    TestAVLInsertion<TreeContainer>({30, 10, 20});
+    TestAVLInsertion<TreeContainer>({10, 30, 20});
+
+    // Insercion secuencial: en un arbol binario formaria una diagonal
+    TreeContainer sequential;
+    for (TX value = 1; value <= 7; ++value)
+        sequential.insert(value, Ref(value));
+
+    cout << "\nInsercion secuencial del 1 al 7: " << sequential << endl;
+    sequential.PrintVertical();
+    PrintAVLStatus(sequential);
+
+    // Copia y movimiento
+    TreeContainer copied(sequential);
+    cout << "\nCopia: " << copied << endl;
+    copied.PrintVertical();
+    PrintAVLStatus(copied);
+
+    TreeContainer moved(std::move(copied));
+    cout << "\nTras mover la copia: " << moved << endl;
+    moved.PrintVertical();
+    PrintAVLStatus(moved);
+
+    // Las eliminaciones vacian un lado y fuerzan una rotacion
+    moved.remove(1);
+    moved.remove(3);
+    moved.remove(2);
+    cout << "\nTras eliminar 1, 3 y 2: " << moved << endl;
+    moved.PrintVertical();
+    PrintAVLStatus(moved);
+
+    // Prueba de carga
+    TreeContainer large;
+    for (TX value = 1; value <= 1000; ++value)
+        large.insert(value, Ref(value));
+
+    cout << "\n1000 nodos insertados" << endl;
+    PrintAVLStatus(large);
+
+    for (TX value = 2; value <= 1000; value += 2)
+        large.remove(value);
+
+    cout << "Tras eliminar los pares, nodos: " << large.size() << endl;
+    PrintAVLStatus(large);
+
+    // Eliminar un valor inexistente
+    try {
+        large.remove(9999);
+    } catch (const out_of_range &e) {
+        cout << "Error esperado: " << e.what() << endl;
+    }
+}
+
+void DemoAVLTree() {
+    cout << "\n";
+    PrintColored(cout, "Pruebas para AVLTree ascendente", Color::Yellow);
+    AVLTree<AVLTreeAscTraits<TX>> asc_tree;
+    TestAVLTree(asc_tree, "avltree_asc.txt");
+
+    cout << "\n";
+    PrintColored(cout, "Pruebas para AVLTree descendente", Color::Yellow);
+    AVLTree<AVLTreeDescTraits<TX>> desc_tree;
+    TestAVLTree(desc_tree, "avltree_desc.txt");
 }
