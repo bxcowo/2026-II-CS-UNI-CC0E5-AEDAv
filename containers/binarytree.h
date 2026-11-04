@@ -485,4 +485,7 @@ auto BaseBinaryTree<Traits, Mixins...>::operator=(BaseBinaryTree&& another) noex
     return *this;
 }
 
+template <typename T> using AscendingBinaryTree = BinaryTree<BinaryTreeAscTraits<T>>;
+template <typename T> using DescendingBinaryTree = BinaryTree<BinaryTreeDescTraits<T>>;
+
 #endif // __BINARYTREE_H__
