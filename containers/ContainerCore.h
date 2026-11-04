@@ -26,7 +26,7 @@ protected:
     template <typename Derived, typename StealFunc>
     void move_from(Derived& other, StealFunc steal_fn) noexcept {
         if (this == &other) return;
-        std::scoped_lock lock(this->m_mutex, other.m_mutex);
+        std::scoped_lock lock(this->m_mutex, static_cast<ContainerCore&>(other).m_mutex);
         this->clear();
         steal_fn();
     }
